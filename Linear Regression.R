@@ -392,9 +392,12 @@ galton %>% group_by(pair)%>%
 
 
 
+
+#############################################################################
 #Regression and Baseball
 ?Lahman
 library(Lahman)
+library(broom)
 fit <- Teams %>% 
   filter(yearID %in% 1961:2001) %>% 
   mutate(BB = BB/G, HR = HR/G,  R = R/G) %>%  
@@ -510,6 +513,7 @@ players %>% filter(year(debut)<1998)%>%
 
 
 #Building a Better Offensive Metric for Baseball: Linear Programming
+library(tidyverse)
 library(reshape2)
 library(lpSolve)
 
@@ -546,33 +550,59 @@ players %>% mutate(BB = my_scale(BB),
 ?mad()
   
 
+#############################################################################
+#Regression Fallacy
+library(Lahman)
+head(Fielding)
+#The code to create a table with player ID, their names, and their most played position:
+playerInfo <- Fielding %>%
+  group_by(playerID)%>%
+  arrange(desc(G))%>%
+  slice(1)%>% #selects the first row from each player, which is the row with the most games
+  ungroup%>%
+  left_join(People, by = "playerID")%>%
+  select (playerID, nameFirst, nameLast, POS)
 
+playerInfo
 
-Sys.getenv("PATH")
+#The code to create a table with only the 'Rookie of the Year' (ROY) award winners and add their batting statistics:
+ROY <- AwardsPlayers %>%
+  filter(awardID =="Rookie of the Year")%>%
+  left_join(playerInfo, by = "playerID")%>%
+  rename(rookie_year = yearID)%>%
+  right_join(Batting, by="playerID")%>%
+  mutate(AVG=H/AB)%>%
+  filter(POS != "P") #filter out pitchers since they don't contribute to batting
+ROY  
 
-
-install.packages("usethis")
-
-# Set your name, email (use the same email as your GitHub account), and default branch
-usethis::use_git_config(
-  user.name = "charlottebh",
-  user.email = "charlottehbs91@gmail.com",
-  init.defaultBranch = "main"
-)
-
-usethis::create_github_token()
-
-gitcreds::gitcreds_set()
-
-usethis::use_git()  
-
-
+#The code to keep only the rookie and sophomore seasons and remove players who did not play sophomore seasons:
+ROY <- ROY %>%
+  filter(yearID == rookie_year | yearID == rookie_year + 1) %>%
+  group_by(playerID)%>%
+  mutate(rookie = ifelse(yearID==min(yearID),"rookie", "sophomore"))%>%
+  filter(n() == 2)%>%
+  ungroup %>%
+  select(playerID, rookie_year, rookie, nameFirst, nameLast, AVG)
+ROY  
+#The code to use the spread function to have one column for the rookie and sophomore years batting averages:
+ROY <- ROY %>% 
+  spread(rookie, AVG) %>%
+  arrange(desc(rookie))
+ROY  
   
-  
-  
-  
-  
-  
+#the proportion of players who have a lower batting average their sophomore year:
+mean(ROY$sophomore - ROY$rookie <= 0 )
+
+
+#The code to do the similar analysis on all players that played the 2013 and 2014 seasons 
+#and batted more than 130 times (minimum to win Rookie of the Year):
+
+
+
+
+
+
+
 
 
 

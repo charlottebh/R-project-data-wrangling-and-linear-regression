@@ -596,7 +596,32 @@ mean(ROY$sophomore - ROY$rookie <= 0 )
 
 #The code to do the similar analysis on all players that played the 2013 and 2014 seasons 
 #and batted more than 130 times (minimum to win Rookie of the Year):
+head(Batting)
+two_years <- Batting %>%
+  filter(yearID %in% 2013:2014)%>%
+  group_by(playerID, yearID) %>%
+  filter(sum(AB) >= 130) %>%
+  summarize(AVG = sum(H)/sum(AB))%>%
+  ungroup%>%
+  spread(yearID, AVG)%>%
+  filter(!is.na(`2013`) & !is.na(`2014`))%>%  
+  # backticks (`) tell R to treat a non-standard name as a column variable, while single quotes (') create a literal text string
+  left_join(playerInfo, by = "playerID")%>%
+  filter(POS!="P")%>%
+  select(-POS)%>%
+  arrange(desc(`2013`))%>%
+  select(nameFirst, nameLast, `2013`, `2014`)
 
+two_years  
+  
+#The code to see what happens to the worst performers of 2013:
+arrange(two_years, `2013`)
+
+#The code to see  the correlation for performance in two separate years:
+qplot(`2013`,`2014`,data = two_years)
+summarize(two_years, cor(`2013`,`2014`, method = "pearson")) #r=0.46 moderate correlation
+   
+  
 
 
 

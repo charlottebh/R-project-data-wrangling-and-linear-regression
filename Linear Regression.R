@@ -622,6 +622,52 @@ qplot(`2013`,`2014`,data = two_years)
 summarize(two_years, cor(`2013`,`2014`, method = "pearson")) #r=0.46 moderate correlation
    
   
+#Measurement error models
+#non-random covariate (such as time)
+#Randomness is introduced from measurement error rather than sampling or natural variability
+
+#use dslabs function rfalling_object to generate simulations of dropping balls:
+library(dslabs)
+falling_object <- rfalling_object()
+
+?rfalling_object()
+with(falling_object, plot(time, observed_distance))
+with(falling_object, lines(time, distance, col = "blue"))
+
+#draw trajactory of the ball
+falling_object %>%
+  ggplot(aes(time, observed_distance))+
+  geom_point()+
+  ylab('Distance in meters')+
+  xlab('Time in seconds')
+
+# use lm() to estimate the coefficients:
+fit <- falling_object %>%
+  mutate(time_sq = time^2) %>%
+  lm(observed_distance~time+time_sq, data= .)
+
+tidy(fit)
+
+
+#check if the estimated parabola fits the data
+augment(fit) %>%
+  ggplot()+
+  geom_point(aes(time, observed_distance)) +
+  geom_line(aes(time, .fitted), col = "blue")
+
+tidy(fit, conf.int = TRUE)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

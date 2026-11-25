@@ -59,6 +59,47 @@ fit3 <- dat3 %>% lm(estimate ~ yearID, data = .)
 tidy(fit3, conf.int = TRUE)
 
 #########################################################################
+#Chapter 2 final assessment
+library(tidyverse)
+library(broom)
+library(Lahman)
+Teams_small <- Teams %>% 
+  filter(yearID %in% 1961:2001) %>% 
+  mutate(avg_attendance = attendance/G)
+
+#Q1
+dat <- Teams_small %>%
+  mutate(R = R/G,
+         HR = HR/G)
+dat %>%
+  summarize(lm(avg_attendance ~ R, data = .)$coef[2])
+
+dat %>%
+  summarize(lm(avg_attendance ~ HR, data = .)$coef[2])
+
+head(Teams_small)
+Teams_small %>% summarize(lm(avg_attendance ~ W, data = .)$coef[2])
+fit <- lm(avg_attendance ~ W, data = Teams_small)
+tidy(fit)
+Teams_small %>% summarize(lm(avg_attendance ~ yearID, data = .)$coef[2])
+
+#Q2 Are wins and runs per game or wins and home runs per game correlated?
+
+library(dplyr)
+Teams_small2 <- Teams %>% 
+  filter(yearID %in% 1961:2001) %>% 
+  mutate(avg_attendance = attendance/G,
+         R_per_G = R/G,
+         HR_per_G = HR/G)
+Teams_small2 %>% summarize(r=cor(W, R_per_G))
+Teams_small2 %>% summarize(r=cor(W, HR_per_G))
+
+
+#Q3 
+
+
+
+
 
 
 

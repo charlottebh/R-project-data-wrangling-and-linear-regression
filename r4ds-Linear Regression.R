@@ -146,16 +146,81 @@ bat_04 <- Batting %>%
   bat_04 %>% filter(mean_singles >0.2) %>% summarize(n())
   bat_04 %>% filter(mean_bb >0.2) %>% summarize(n())
   
+?inner_join
+comb <- inner_join(bat_02, bat_04, by = join_by(playerID)) 
+head(comb)
+str(comb)
+comb %>% summarize(r=cor(singles, mean_singles))
+?cor
+comb %>% summarize(r2=cor(bb, mean_bb))
+
+comb %>% ggplot(aes(x=mean_singles, y=singles))+
+  geom_point()
+
+comb %>% ggplot(aes(x=mean_bb, y=bb))+
+  geom_point()
+comb %>% ggplot(aes(x=mean_bb))+
+  geom_histogram()
+comb %>% ggplot(aes(x=bb))+
+  geom_histogram()
+
+fit_l <- lm(mean_singles ~ singles, data = comb)
+fit_l
+coef(fit_l)
+
+fit_bb <- lm(bb ~ mean_bb, data = comb)
+fit_bb
+
+###################
+###2.3.Advanced dplyr###########
+#stratify by HR
+dat <- Teams %>% filter(yearID %in% 1961:2001)%>%
+  mutate(HR = round(HR/G,1),
+         BB = BB/G,
+         R = R/G) %>%
+  select(HR, BB, R)%>%
+  filter(HR >= 0.4 & HR <=1.2)
+#calculate slope of regression line to predict runs
+#by BB in different HR strata
+dat %>%
+  group_by(HR) %>%
+  summarize(slope = cor(BB,R)*sd(R)/sd(BB))
+
+#lm does not work with group_by
+dat %>%
+  group_by(HR)%>%
+  lm(R~BB, data = .)%>%
+  .$coef
+
+#include lm inside summarize
+dat %>%
+  group_by(HR)%>%
+  summarize(slope = lm(R~BB)$coef[2])
+
+#tidy function from broom returns estimates in and information 
+#in a data frame
+library(broom)
+fit <- lm(R~BB, data = dat)
+tidy(fit)
+
+tidy(fit, conf.int=TRUE)
+
+#combine with group_by and summarize to get the table we want
+dat %>%
+  group_by(HR)%>%
+  summarize(tidy(lm(R~BB), conf.int=TRUE))%>%
+  filter(term == "BB")%>%
+  select(HR, estimate, conf.low, conf.high)
+
+dat %>%
+  group_by(HR)%>%
+  summarize(tidy(lm(R~BB), conf.int=TRUE))%>%
+  filter(term == "BB")%>%
+  select(HR, estimate, conf.low, conf.high)%>%
+  ggplot(aes(HR, y=estimate, ymin = conf.low, ymax=conf.high))+
+  geom_errorbar()+
+  geom_point()
   
-  
-  
-
-
-
-
-
-
-
 
 
 
